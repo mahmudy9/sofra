@@ -1,0 +1,23 @@
+clients 
+    name
+    email
+    phone
+    city_id
+    neighborhood_id
+    address
+    password
+
+cities
+    name
+
+neighborhoods
+    name
+
+orders
+    restaurant_id
+    product_id
+    status
+    price
+    commission
+    delivery
+    total
