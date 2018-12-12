@@ -15,9 +15,72 @@ neighborhoods
 
 orders
     restaurant_id
-    product_id
-    status
+    client_id
+    order_status enum (pending , dilevered , rejected)
+    client_decision enum (accepted , rejected)
+    restaurant_decision enum(accepted rejected)
     price
     commission
-    delivery
+    delivery_fee
     total
+    notes text
+
+order_product
+    order_id
+    product_id
+    quantity
+    price
+    special_order string
+
+reviews
+    restaurant_id
+    client_id
+    review
+    rating
+
+restaurants
+    name
+    city_id
+    neighborhood_id
+    email
+    password
+    category_id
+    min_order
+    delivery_fee
+    deliverytime_from
+    deliverytime_to
+    orders_days enum(all week days , all days except friday)
+    phone nullable
+    whatsapp nullable
+    pic
+    rating
+    status enum(open , closed)
+
+products
+    name
+    description string
+    price
+    duration
+    pic
+    restaurant_id
+
+offers
+    name
+    description
+    price
+    from_date
+    to_date
+    pic
+
+notifications
+    name
+    details
+    client_id
+
+appfees
+    restaurant_id
+    amount_paid
+    paymentmethod_id
+
+paymentmethods
+    name
