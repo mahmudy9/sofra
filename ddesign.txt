@@ -55,6 +55,7 @@ restaurants
     pic
     rating
     status enum(open , closed)
+    activated
 
 products
     name
@@ -63,6 +64,7 @@ products
     duration
     pic
     restaurant_id
+    activated
 
 offers
     name
