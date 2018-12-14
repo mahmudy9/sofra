@@ -41,10 +41,16 @@ return [
             'provider' => 'users',
         ],
 
-        'api' => [
-            'driver' => 'token',
-            'provider' => 'users',
+        'api_client' => [
+            'driver' => 'jwt',
+            'provider' => 'client',
         ],
+
+        'api_rest' => [
+            'driver' => 'jwt',
+            'provider' => 'restaurant',
+        ],
+
     ],
 
     /*
@@ -70,10 +76,16 @@ return [
             'model' => App\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'client' => [
+            'driver' => 'eloquent',
+            'model' => App\Client::class,
+        ],
+
+        'restaurant' => [
+            'driver' => 'eloquent',
+            'model' => App\Restaurant::class,
+        ],
+
     ],
 
     /*

@@ -6,15 +6,16 @@ clients
     neighborhood_id
     address
     password
+    activated default(1)
 
 cities
     name
 
 neighborhoods
     name
+    city_id
 
 orders
-    restaurant_id
     client_id
     order_status enum (pending , dilevered , rejected)
     client_decision enum (accepted , rejected)
@@ -23,13 +24,16 @@ orders
     commission
     delivery_fee
     total
-    notes text
+    notes string
+    discount nullable
+    offer_id nullable
 
 order_product
     order_id
     product_id
     quantity
     price
+    total
     special_order string
 
 reviews
@@ -49,34 +53,36 @@ restaurants
     delivery_fee
     deliverytime_from
     deliverytime_to
-    orders_days enum(all week days , all days except friday)
+    order_days enum(all days , all days except friday , all days except saturday , all days except sunday)
     phone nullable
     whatsapp nullable
     pic
     rating
     status enum(open , closed)
-    activated
+    activated default(1)
 
 products
     name
     description string
     price
-    duration
+    cooking_duration
     pic
     restaurant_id
-    activated
+    activated default(1)
 
 offers
+    restaurant_id
     name
     description
-    price
+    discount_percent
     from_date
     to_date
     pic
+    activated default(1)
 
 notifications
-    name
-    details
+    title
+    content
     client_id
 
 appfees
@@ -85,4 +91,32 @@ appfees
     paymentmethod_id
 
 paymentmethods
+    name
+
+complaints
+    restaurant_id nullable
+    client_id nullable
+    name
+    email
+    phone
+    content
+
+
+contacts
+    restaurant_id nullable
+    client_id nullable
+    name
+    email
+    phone
+    content
+
+suggestions
+    restaurant_id nullable
+    client_id nullable
+    name
+    email
+    phone
+    content
+
+category
     name
