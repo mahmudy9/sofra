@@ -8,7 +8,7 @@ class Product extends Model
 {
     public function restaurant()
     {
-        return $this->belongsTo('App\Product' , 'restaurant_id');
+        return $this->belongsTo('App\Restaurant' , 'restaurant_id');
     }
 
     public function orders()

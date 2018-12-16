@@ -6,6 +6,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Notifications\ClientResetPasswordNotification;
 
 class Client extends Authenticatable implements JWTSubject
 {
@@ -13,6 +14,13 @@ class Client extends Authenticatable implements JWTSubject
 
 
     protected $hidden = ['password'];
+
+    protected $guard = "api_client";
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ClientResetPasswordNotification($token));
+    }
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.

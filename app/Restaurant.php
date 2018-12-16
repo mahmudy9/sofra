@@ -6,6 +6,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Notifications\RestResetPasswordNotification;
 
 class Restaurant extends Authenticatable implements JWTSubject
 {
@@ -13,6 +14,14 @@ class Restaurant extends Authenticatable implements JWTSubject
 
     protected $hidden = ['password'];
 
+
+    protected $guard = "api_rest";
+
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new RestResetPasswordNotification($token));
+    }
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.

@@ -80,6 +80,7 @@
             @endif
 
             <div class="content">
+                @include('status')
                 <div class="title m-b-md">
                     Laravel
                 </div>

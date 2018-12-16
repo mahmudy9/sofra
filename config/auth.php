@@ -43,12 +43,12 @@ return [
 
         'api_client' => [
             'driver' => 'jwt',
-            'provider' => 'client',
+            'provider' => 'clients',
         ],
 
         'api_rest' => [
             'driver' => 'jwt',
-            'provider' => 'restaurant',
+            'provider' => 'restaurants',
         ],
 
     ],
@@ -76,12 +76,12 @@ return [
             'model' => App\User::class,
         ],
 
-        'client' => [
+        'clients' => [
             'driver' => 'eloquent',
             'model' => App\Client::class,
         ],
 
-        'restaurant' => [
+        'restaurants' => [
             'driver' => 'eloquent',
             'model' => App\Restaurant::class,
         ],
@@ -106,6 +106,18 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_resets',
+            'expire' => 60,
+        ],
+
+        'clients' => [
+            'provider' => 'clients',
+            'table' => 'password_resets',
+            'expire' => 60,
+        ],
+
+        'restaurants' => [
+            'provider' => 'restaurants',
             'table' => 'password_resets',
             'expire' => 60,
         ],
