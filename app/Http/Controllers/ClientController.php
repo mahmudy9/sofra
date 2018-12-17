@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Resources\Restaurant as RestResource;
-use App\Http\Resources\testResource;
-
 use App\Restaurant;
 use App\Http\Resources\RestProducts;
 use App\Http\Resources\RestReviews;
@@ -33,16 +31,10 @@ class ClientController extends Controller
         return new RestProducts($restaurant);
     }
 
-    //public function restaurant_reviews($restaurant_id)
-    //{
-     //   $restaurant = Restaurant::findOrFail($restaurant_id);
-    //    return new RestReviews($restaurant);
-    //}
-
-    public function restaurant_reviews($id)
+    public function restaurant_reviews($restaurant_id)
     {
-        $restaurant = Restaurant::findOrFail($id);
-        return new testResource($restaurant);
+       $restaurant = Restaurant::findOrFail($restaurant_id);
+       return new RestReviews($restaurant);
     }
 
     public function restaurant_details($restaurant_id)
