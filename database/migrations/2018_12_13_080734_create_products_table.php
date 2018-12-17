@@ -19,6 +19,7 @@ class CreateProductsTable extends Migration
             $table->string('description');
             $table->string('cooking_duration');
             $table->string('pic');
+            $table->decimal('price', 8,2);
             $table->unsignedInteger('restaurant_id');
             $table->tinyInteger('activated')->default(1);
             $table->timestamps();

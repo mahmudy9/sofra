@@ -93,4 +93,9 @@ class Restaurant extends Authenticatable implements JWTSubject
         return $this->hasMany('App\Review' , 'restaurant_id');
     }
 
+    public function orders()
+    {
+        return $this->hasMany('App\Order' , 'restaurant_id');
+    }
+
 }

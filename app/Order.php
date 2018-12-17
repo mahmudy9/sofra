@@ -20,4 +20,9 @@ class Order extends Model
     {
         return $this->belongsTo('App\Offer' , 'offer_id');
     }
+
+    public function restaurant()
+    {
+        return $this->belongsTo('App\Restaurant' , 'restaurant_id');
+    }
 }

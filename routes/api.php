@@ -28,6 +28,7 @@ Route::get('/client/restaurant/products/{restaurantid}', 'ClientController@resta
 Route::get('/client/restaurant/reviews/{restaurantid}' , 'ClientController@restaurant_reviews');
 Route::get('/client/restaurant/details/{restaurantid}' , 'ClientController@restaurant_details');
 Route::get('/client/product/{productid}' , 'ClientController@product');
+Route::post('/client/order/create' , 'ClientController@create_order');
 
 Route::post('/rest/register' , 'RestAuthController@register');
 Route::post('/rest/login', 'RestAuthController@login');

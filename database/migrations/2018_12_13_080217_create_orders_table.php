@@ -16,15 +16,17 @@ class CreateOrdersTable extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('client_id');
+            $table->unsignedInteger('restaurant_id');
+            $table->unsignedInteger('offer_id')->nullable();
             $table->enum('order_status' , ['pending' , 'delivered' , 'rejected']);
-            $table->enum('client_decision' , ['accepted' , 'rejected']);
-            $table->enum('restaurant_decision' , ['accepted' , 'rejected']);
+            $table->enum('client_decision' , ['accepted' , 'rejected','pending']);
+            $table->enum('restaurant_decision' , ['accepted' , 'rejected' , 'pending']);
             $table->decimal('price' , 8 , 2);
             $table->decimal('commission' , 8 , 2);
-            $table->decimal('delivrey_fee' , 8 , 2);
+            $table->decimal('delivery_fee' , 8 , 2);
             $table->decimal('total' , 8 , 2);
-            $table->string('notes');
-            $table->decimal('discount' ,8 ,2 );
+            $table->string('notes')->nullable();
+            $table->decimal('discount' ,8 ,2 )->nullable();
             $table->timestamps();
         });
     }

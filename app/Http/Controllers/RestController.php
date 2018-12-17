@@ -22,7 +22,8 @@ class RestController extends Controller
             'name' => 'required|min:3|max:190|string',
             'description' => 'required|string|min:10|max:190',
             'cooking_duration' => 'required|string|min:2|max:30',
-            'pic' => 'required|image|max:1900'
+            'pic' => 'required|image|max:1900',
+            'price' => 'required|numeric|between:0,99999999.99',
         ]);
         if($validator->fails())
         {
