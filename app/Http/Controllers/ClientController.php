@@ -61,7 +61,8 @@ class ClientController extends Controller
     public function create_order(Request $request)
     {
         $validator = Validator::make($request->all() , [
-            'products' => 'required|array',
+            'items' => 'required|array',
+            'items.*.item_id' => 'required|exists:products,id',
             'restaurant' => 'required|integer',
             'notes' => 'nullable|string|max:190',
             'offer' => 'nullable|integer'
@@ -71,6 +72,7 @@ class ClientController extends Controller
             return apiRes(400 , 'Validation error' , $validator->errors());
         }
         $rest = Restaurant::findOrFail($request->input('restaurant'));
+        $products_array = $rest->products()->pluck('id')->toArray();
         if($rest['status'] == 'closed')
         {
             return apiRes(400 , 'you can not make order ,restaurant is closed');
@@ -89,16 +91,39 @@ class ClientController extends Controller
         $order->order_status = 'pending';
         $order->client_decision = 'pending';
         $order->restaurant_decision = "pending";
+        $order->price = 0;
+        $order->commission = 0;
+        $order->delivery_fee = $rest->delivery_fee;
+        $order->total = 0;
+        auth('api_client')->user()->orders()->save($order);
+
         
-        $products = $request->input('products');
+        $items = $request->input('items');
         $price = 0;
-        foreach($products as $product)
+        foreach($items as $item)
         {
-            $price = $product['price'] * $product['quantity'] + $price;
+            $product = Product::find($item['item_id']);
+            if(!in_array($product['id'] , $products_array))
+            {
+                $order->products()->detach();
+                $order->delete();
+                return apiRes(400 , 'error , invalid items , not in restaturant products');
+            }
+            $price = $price + $product['price'] * $item['quantity'];
+            $product_ready = [
+                $product['id'] => [
+                    'quantity' => $item['quantity'],
+                    'price' => $product['price'],
+                    'special_order' => $item['special_order'],
+                ],
+            ];
+            $order->products()->attach($product_ready);
         }
 
         if($price < $rest['min_order'])
         {
+            $order->products()->detach();
+            $order->delete();
             return apiRes(400 , 'your order is less than the min charge order');
         }
         
@@ -117,13 +142,13 @@ class ClientController extends Controller
         }
 
         $order->total = $total;
+        $order->save();
 
-        auth('api_client')->user()->orders()->save($order);
-        $order->products()->attach($products);
         
         return apiRes(200 , 'order created' , $order);
     }
 
+    
     public function client_address()
     {
         $client = auth('api_client')->user();
