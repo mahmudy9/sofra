@@ -20,9 +20,20 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'cooking_duration' => $this->cooking_duration,
             'pic' => asset('storage/'.$this->pic),
+            'price' => $this->price,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'restaurant' => $this->restaurant->name
+            'restaurant' => $this->restaurant->name,
+            'qunatity' => $this->whenPivotLoaded( 'order_product' ,function() {
+                return $this->pivot->quantity;
+            }),
+            'price_pivot' => $this->whenPivotLoaded( 'order_product' ,function() {
+                return $this->pivot->price;
+            }),
+            'special_order' => $this->whenPivotLoaded( 'order_product' ,function() {
+                return $this->pivot->special_order;
+            }),
+
         ];
     }
 }

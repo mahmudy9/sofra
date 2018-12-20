@@ -8,7 +8,7 @@ class Order extends Model
 {
     public function products()
     {
-        return $this->belongsToMany('App\Product' , 'order_product');
+        return $this->belongsToMany('App\Product' , 'order_product')->withPivot('quantity' , 'price' , 'special_order');
     }
 
     public function client()

@@ -18,7 +18,7 @@ class CreateReviewsTable extends Migration
             $table->unsignedInteger('restaurant_id');
             $table->unsignedInteger('client_id');
             $table->string('review');
-            $table->decimal('rating' , 8 , 2);
+            $table->decimal('rating' , 2 , 1);
             $table->timestamps();
         });
     }
