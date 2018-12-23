@@ -24,3 +24,5 @@ Route::post('/client/password/reset' , 'ClientResetPasswordController@reset');
 
 Route::get('/rest/password/reset/{token}' , 'RestResetPasswordController@showResetForm');
 Route::post('/rest/password/reset' , 'RestResetPasswordController@reset');
+
+Route::get('/admin' , 'AdminController@index');
