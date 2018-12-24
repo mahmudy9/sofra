@@ -1,12 +1,10 @@
 openapi: 3.0.0
-# Added by API Auto Mocking Plugin
 servers:
   - description: local server
-    url: http://localhost:8000/api
+    url: 'http://localhost:8000/api'
 info:
   description: this is sofra food ordering app documentation
-
-  version: "1.0.0"
+  version: 1.0.0
   title: Sofra Apis
   termsOfService: 'http://swagger.io/terms/'
   contact:
@@ -20,22 +18,19 @@ tags:
   - name: restaurant
     description: restaurant requests
 paths:
-  /client:
+  /client/register:
     post:
       tags:
         - client
-      summary: Add a new pet to the store
-      operationId: addPet
+      summary: register client to Sofra
+      operationId: registerClient
       responses:
-        '405':
+        '200':
+          description: success user registered
+        '400':
           description: Invalid input
-        '404':
-          description: Not Found
-
       security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
+        - ClientBearer: []
       requestBody:
         $ref: '#/components/requestBodies/Pet'
     put:
@@ -96,7 +91,6 @@ paths:
           description: Invalid status value
         '404':
           description: Not found http
-
       security:
         - petstore_auth:
             - 'write:pets'
@@ -666,7 +660,13 @@ components:
       required: true
 
   securitySchemes:
-    bearerAuth:            # arbitrary name for the security scheme
+    
+    ClientBearer:
       type: http
       scheme: bearer
-      bearerFormat: JWT    # optional, arbitrary valu
+      bearerFormat: JWT
+    
+    RestBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
