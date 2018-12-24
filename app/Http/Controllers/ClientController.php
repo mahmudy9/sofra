@@ -72,7 +72,7 @@ class ClientController extends Controller
             return apiRes(400 , 'Validation error' , $validator->errors());
         }
         $rest = Restaurant::findOrFail($request->input('restaurant'));
-        $products_array = $rest->products()->pluck('id')->toArray();
+        //$products_array = $rest->products()->pluck('id')->toArray();
         if($rest['status'] == 'closed')
         {
             return apiRes(400 , 'you can not make order ,restaurant is closed');
@@ -103,7 +103,8 @@ class ClientController extends Controller
         foreach($items as $item)
         {
             $product = Product::find($item['item_id']);
-            if(!in_array($product['id'] , $products_array))
+            //if(!in_array($product['id'] , $products_array))
+            if($product['id'] != $rest['id'])
             {
                 $order->products()->detach();
                 $order->delete();
