@@ -7,7 +7,7 @@ function apiRes($status , $msg , $data=null)
         'status' => $status,
         'msg' => $msg,
         'data' => $data
-    ]);
+    ], $status);
 }
 
 

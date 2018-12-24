@@ -104,7 +104,7 @@ class ClientController extends Controller
         {
             $product = Product::find($item['item_id']);
             //if(!in_array($product['id'] , $products_array))
-            if($product['id'] != $rest['id'])
+            if($product['restaurant_id'] != $rest['id'])
             {
                 $order->products()->detach();
                 $order->delete();
