@@ -18,6 +18,7 @@ use App\Http\Resources\Offer as OfferResource;
 use App\Complaint;
 use App\Review;
 use App\Http\Resources\ReviewResource;
+use OneSignal;
 
 class ClientController extends Controller
 {

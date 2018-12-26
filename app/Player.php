@@ -4,9 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
+class Player extends Model
 {
-    public function notifiable()
+    public function playable()
     {
         return $this->morphTo();
     }

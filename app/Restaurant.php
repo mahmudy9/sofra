@@ -17,6 +17,14 @@ class Restaurant extends Authenticatable implements JWTSubject
 
     protected $guard = "api_rest";
 
+    protected $appends = ['rating'];
+
+    public function getRatingAttribute()
+    {
+        $rating = $this->reviews()->avg('rating');
+        $rating = round($rating , 2);
+        return $rating;
+    }
 
     public function sendPasswordResetNotification($token)
     {
@@ -41,6 +49,16 @@ class Restaurant extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany('App\Notification' , 'notifiable');
+    }
+
+    public function player()
+    {
+        return $this->morphOne('App\Player' , 'playable');
     }
 
     public function category()

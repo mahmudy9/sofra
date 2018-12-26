@@ -29,7 +29,6 @@ class CreateRestaurantsTable extends Migration
             $table->string('phone')->nullable();
             $table->string('whatsapp')->nullable();
             $table->string('pic');
-            $table->decimal('rating' , 8 , 2)->nullable();
             $table->enum('status' , ['open' , 'closed'])->default('closed');
             $table->tinyInteger('activated')->default(1);
             $table->timestamps();

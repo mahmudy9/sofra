@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Restaurant;
 use Illuminate\Support\Facades\Hash;
 use Validator;
+use OneSignal;
+use App\Player;
 
 class RestAuthController extends Controller
 {
@@ -82,15 +84,56 @@ class RestAuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login()
+    public function login(Request $request)
     {
+        $validator = Validator::make($request->all() , [
+            'email' => 'required|email',
+            'password' => 'required',
+            'device_type' => 'required|integer'
+        ]);
+        if($valdiator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+
         $credentials = request(['email', 'password']);
 
         if (! $token = auth('api_rest')->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
+        $restaurant = Restaurant::where('email' , $request->email)->first();
+        $this->store_palyer($restaurant , $request->device_type);
         return $this->respondWithToken($token);
+    }
+
+
+    private function create_player( $device_type)
+    {
+        $params = ['device_type' => $device_type];
+        return OneSignal::createPlayer($params)->getBody()->getContents();
+    }
+
+    private function store_palyer($restaurant , $device_type)
+    {
+        $player_json = $this->create_player($device_type);
+        $player_array = \json_decode($player_json , true);
+        $player_id = $player_array['id'];
+
+        //$rest = Restaurant::find($restaurant_id);
+        if( Player::where('player_id' , $player_id)->exists())
+        {
+            Player::where('player_id' , $player_id)->delete();
+        }
+        $player = new Player;
+        $player->player_id = $player_id;
+        $player->device_type = $device_type;
+        $rest->player()->save($player);
+        return true;
+    }
+
+    private function remove_player()
+    {
+        return auth('api_rest')->user()->player()->delete();
     }
 
     /**
@@ -110,8 +153,8 @@ class RestAuthController extends Controller
      */
     public function logout()
     {
+        $this->remove_player();
         auth('api_rest')->logout();
-
         return response()->json(['message' => 'Successfully logged out']);
     }
 
