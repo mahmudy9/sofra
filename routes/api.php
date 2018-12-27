@@ -44,6 +44,7 @@ Route::post('/client/contact/create' , 'ClientController@create_contact');
 Route::post('/client/review/create' , 'ClientController@create_review');
 Route::delete('/client/review/destroy/{reviewid}' , 'ClientController@destroy_review');
 Route::post('/client/trynote' , 'ClientAuthController@sendNote');
+Route::post('/client/tryfire' , 'ClientAuthController@notifyByFirebase');
 
 Route::post('/rest/register' , 'RestAuthController@register');
 Route::post('/rest/login', 'RestAuthController@login');

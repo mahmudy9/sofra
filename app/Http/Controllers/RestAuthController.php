@@ -91,7 +91,7 @@ class RestAuthController extends Controller
             'password' => 'required',
             'device_type' => 'required|integer'
         ]);
-        if($valdiator->fails())
+        if($validator->fails())
         {
             return apiRes(400 , 'validation error' , $validator->errors());
         }
@@ -127,7 +127,7 @@ class RestAuthController extends Controller
         $player = new Player;
         $player->player_id = $player_id;
         $player->device_type = $device_type;
-        $rest->player()->save($player);
+        $restaurant->player()->save($player);
         return true;
     }
 

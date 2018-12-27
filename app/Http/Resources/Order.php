@@ -18,7 +18,7 @@ class Order extends JsonResource
             'order_id' => $this->id,
             'client' => $this->client->name,
             'restaurant' => $this->restaurant->name,
-            'offer' => $this->offer ? $this->offer->name : null,
+            'offer' => optional($this->offer)->name,
             'order_status' => $this->order_status,
             'price' => $this->price,
             'delivery_fee' => $this->delivery_fee,
