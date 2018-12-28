@@ -57,6 +57,11 @@ class Client extends Authenticatable implements JWTSubject
         return $this->morphMany('App\Notification' , 'notifiable');
     }
 
+    public function tokens()
+    {
+        return $this->morphMany('App\Token' , 'tokenable');
+    }
+
     public function player()
     {
         return $this->morphOne('App\Player' , 'playable');

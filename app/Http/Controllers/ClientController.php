@@ -19,13 +19,16 @@ use App\Complaint;
 use App\Review;
 use App\Http\Resources\ReviewResource;
 use OneSignal;
+use App\Http\Resources\Orderitem;
+use App\Notification;
+use App\City;
 
 class ClientController extends Controller
 {
     public function __construct()
     {
         $this->middleware(['auth:api_client'])
-        ->except(['restaurants' , 'restaurant_products' , 'restaurant_reviews' , 'restaurant_details' , 'product']);
+        ->except(['restaurants' , 'restaurant_products' , 'restaurant_reviews' , 'restaurant_details' , 'product' , 'search_restaurant_products' , 'search_restaurants']);
     }
 
     
@@ -64,6 +67,7 @@ class ClientController extends Controller
         $validator = Validator::make($request->all() , [
             'items' => 'required|array',
             'items.*.item_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer',
             'restaurant' => 'required|integer',
             'notes' => 'nullable|string|max:190',
             'offer' => 'nullable|integer'
@@ -146,8 +150,14 @@ class ClientController extends Controller
         $order->total = $total;
         $order->save();
 
-        
-        return apiRes(200 , 'order created' , $order);
+        $notification = $rest->notifications()->create([
+            'title' => 'New Order created',
+            'content' => 'new order created by client '.auth('api_client')->user()->name.', Order id is '.$order->id.' with total of '.$order->total,
+            'order_id' => $order->id,
+        ]);
+        $tokens = $rest->tokens()->pluck('token')->toArray();
+        $fire = notifyByFirebase($notification->title , $notification->content , $tokens , ['order_id' => $notification->order_id]);
+        return apiRes(200 , 'order created and restaurant notification details is '.$fire);
     }
 
     
@@ -201,6 +211,13 @@ class ClientController extends Controller
         $order->order_status = 'delivered';
         $order->client_decision = 'accepted';
         $order->save();
+        $rest = Restaurant::find($order['restaurant_id']);
+        $not = $rest->notifications()->create([
+            'title' => 'order accepted by client',
+            'content' => 'order with id '.$orderid.' has been accepted from client '.auth('api_client')->user()->name,
+            'order_id' => $orderid,
+        ]);
+        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $orderid]);
         return apiRes(200 , 'order accepted by you');
     }
 
@@ -211,9 +228,22 @@ class ClientController extends Controller
         {
             return apiRes(400 , 'can not reject finished order');
         }
+        if($order['restaurant_decision'] == 'pending')
+        {
+            return apiRes(400 , 'can not reject order pending restaurant decision');
+        }
+
         $order->client_decision = 'rejected';
         $order->order_status = 'rejected';
         $order->save();
+        $rest = Restaurant::find($order['restaurant_id']);
+        $not = $rest->notifications()->create([
+            'title' => 'order rejected by client',
+            'content' => 'order with id '.$orderid.' has been rejected from client '.auth('api_client')->user()->name,
+            'order_id' => $orderid,
+        ]);
+        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $orderid]);
+
         return apiRes(200 , 'order has been rejected');
     }
 
@@ -346,5 +376,65 @@ class ClientController extends Controller
         return apiRes(200 , 'success , your review has been deleted');
     }
 
+    public function order_items($orderid)
+    {
+        $order = Order::findOrFail($orderid);
+        if($order['client_id'] != auth('api_client')->user()->id)
+        {
+            return apiRes(400 , 'can not show order data because it is not yours');
+        }
+        $orderitems = Order::where('id' , $orderid)->with('products')->first();
+        //return apiRes(200 , 'order items' , $orderitems);
+        return (new Orderitem($orderitems))->additional(['status' => 200 , 'msg' => 'order items']);
+    }
+
+    public function my_notifications()
+    {
+        $notes = auth('api_client')->user()->notifications()->paginate(10);
+        return apiRes(200 , 'your notifications' , $notes);
+    }
+
+
+    public function search_restaurants(Request $request)
+    {
+        $validator = Validator::make($request->all() , [
+            'keyword' => 'required|string',
+            'city' => 'required|integer'
+        ]);
+
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+        
+        $city = City::findOrFail($request->city);
+        $results = $city->restaurants()->where('activated' , 1)->where('status' , 'open')->where('name', 'like' , '%'.$request->keyword.'%')->paginate(10);
+        return apiRes(200 , 'results' , $results);
+    }
+
+
+    public function search_restaurant_products(Request $request)
+    {
+        $validator = Validator::make($request->all() , [
+            'keyword' => 'required|string',
+            'restaurant' => 'required|integer',
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+
+        $rest = Restaurant::findOrFail($request->restaurant);
+        if($rest['activated'] != 1)
+        {
+            return apiRes(400 , 'error, can not search deactivated restaurant');
+        }
+        $results = $rest->products()->where('activated' , 1)->where(function($q) use($request) {
+            $q->where('name' , 'like' , '%'.$request->keyword.'%')
+            ->orWhere('description' , 'like' , '%'.$request->keyword.'%');
+        })->paginate(10);
+
+        return apiRes(200 , 'search results for restaurant '.$rest['name'] ,$results );
+    }
 
 }

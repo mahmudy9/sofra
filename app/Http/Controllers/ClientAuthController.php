@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Client;
 use OneSignal;
 use App\Player;
+use App\Token;
 
 class ClientAuthController extends Controller
 {
@@ -61,7 +62,6 @@ class ClientAuthController extends Controller
         $validator = Validator::make($request->all() , [
             'email' => 'required|email',
             'password' => 'required',
-            'device_type' => 'required|integer'
         ]);
         if($validator->fails())
         {
@@ -72,108 +72,35 @@ class ClientAuthController extends Controller
         if (! $token = auth('api_client')->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $client = Client::where('email' , $request->email)->first();
-        $this->store_palyer($client , $request->device_type);
         return $this->respondWithToken($token);
     }
 
-    public function sendNote()
+    public function register_token(Request $request)
     {
-        $player = auth('api_client')->user()->player()->first();
-        //OneSignal::sendNotificationToUser('This is note' , $player['player_id']);
-        $content = array(
-			"en" => 'this is test message'
-			);
-		
-		$fields = array(
-			'app_id' => env('ONESIGNAL_APPID'),
-			'include_player_ids' => array(),
-			'data' => array("foo" => "bar"),
-			'contents' => $content
-		);
-		
-		$fields = json_encode($fields);
-		
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "https://onesignal.com/api/v1/notifications");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json; charset=utf-8' ,
-         'Authorization: Basic '.env('ONESIGNAL_REST_API_KEY')));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-		curl_setopt($ch, CURLOPT_HEADER, FALSE);
-		curl_setopt($ch, CURLOPT_POST, TRUE);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-
-		$response = curl_exec($ch);
-		curl_close($ch);
-		
-		
-        
-        return apiRes(200 , 'success notification sent to one signal' , $response);
+        $validator = Validator::make($request->all() , [
+            'type' => 'required|in:android,ios',
+            'token' => 'required|string'
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+        Token::where('token' , $request->token)->delete();
+        auth('api_client')->user()->tokens()->create($request->all());
+        return apiRes(200 , 'success token registered');
     }
 
-
-
-    function notifyByFirebase($title="hithere", $body="notification body",
-     $tokens=['jgfhdggt'], $data = [], $is_notification = true)
+    public function remove_token(Request $request)
     {
-    // https://gist.github.com/rolinger/d6500d65128db95f004041c2b636753a
-    // API access key from Google FCM App Console
-        // env('FCM_API_ACCESS_KEY'));
-    
-    //    $singleID = 'eEvFbrtfRMA:APA91bFoT2XFPeM5bLQdsa8-HpVbOIllzgITD8gL9wohZBg9U.............mNYTUewd8pjBtoywd';
-    //    $registrationIDs = array(
-    //        'eEvFbrtfRMA:APA91bFoT2XFPeM5bLQdsa8-HpVbOIllzgITD8gL9wohZBg9U.............mNYTUewd8pjBtoywd',
-    //        'eEvFbrtfRMA:APA91bFoT2XFPeM5bLQdsa8-HpVbOIllzgITD8gL9wohZBg9U.............mNYTUewd8pjBtoywd',
-    //        'eEvFbrtfRMA:APA91bFoT2XFPeM5bLQdsa8-HpVbOIllzgITD8gL9wohZBg9U.............mNYTUewd8pjBtoywd'
-    //    );
-        $registrationIDs = $tokens;
-    
-    // prep the bundle
-    // to see all the options for FCM to/notification payload:
-    // https://firebase.google.com/docs/cloud-messaging/http-server-ref#notification-payload-support
-    
-    // 'vibrate' available in GCM, but not in FCM
-        $fcmMsg = array(
-            'body' => $body,
-            'title' => $title,
-            'sound' => "default",
-            'color' => "#203E78"
-        );
-        $data = json_encode($data);
-    // I haven't figured 'color' out yet.
-    // On one phone 'color' was the background color behind the actual app icon.  (ie Samsung Galaxy S5)
-    // On another phone, it was the color of the app icon. (ie: LG K20 Plush)
-    
-    // 'to' => $singleID ;      // expecting a single ID
-    // 'registration_ids' => $registrationIDs ;     // expects an array of ids
-    // 'priority' => 'high' ; // options are normal and high, if not set, defaults to high.
-        $fcmFields = array(
-            'registration_ids' => $registrationIDs,
-            'priority' => 'high',
-            'data' => $data
-        );
-        if ($is_notification)
+        $validator = Validator::make($request->all() , [
+            'token' => 'required'
+        ]);
+        if($validator->fails())
         {
-            $fcmFields['notification'] = $fcmMsg;
+            return apiRes(400 , 'validation error' , $validator->errors());
         }
-    
-        $headers = array(
-            'Authorization: key=' . env('FIREBASE_API_ACCESS_KEY'),
-            'Content-Type: application/json'
-        );
-    
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmFields));
-        $result = curl_exec($ch);
-        curl_close($ch);
-        return $result;
-
+        auth('api_client')->user()->tokens()->where('token' , $request->token)->delete();
+        return apiRes(200 , 'success token removed');
     }
 
 
@@ -223,8 +150,6 @@ class ClientAuthController extends Controller
      */
     public function logout()
     {
-        $this->remove_player();
-
         auth('api_client')->logout();
 
         return response()->json(['message' => 'Successfully logged out']);

@@ -17,13 +17,29 @@ class Restaurant extends Authenticatable implements JWTSubject
 
     protected $guard = "api_rest";
 
-    protected $appends = ['rating'];
+    protected $appends = ['rating' , 'is_activated' , 'commissions_sum'];
 
     public function getRatingAttribute()
     {
         $rating = $this->reviews()->avg('rating');
         $rating = round($rating , 2);
         return $rating;
+    }
+
+    public function getCommissionsSumAttribute()
+    {
+        $com = $this->orders()->where('order_status' , 'delivered')->sum('commission');
+        return $com;
+    }
+
+    public function getIsActivatedAttribute()
+    {
+        $paidfees = $this->appfees()->sum('amount_paid');
+        if($this->commissions_sum > $paidfees + 500 )
+        {
+            return false;
+        }
+        return true;
     }
 
     public function sendPasswordResetNotification($token)
@@ -59,6 +75,11 @@ class Restaurant extends Authenticatable implements JWTSubject
     public function player()
     {
         return $this->morphOne('App\Player' , 'playable');
+    }
+
+    public function tokens()
+    {
+        return $this->morphMany('App\Token' , 'tokenable');
     }
 
     public function category()

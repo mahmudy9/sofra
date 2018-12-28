@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Validator;
 use OneSignal;
 use App\Player;
+use App\Token;
 
 class RestAuthController extends Controller
 {
@@ -89,7 +90,6 @@ class RestAuthController extends Controller
         $validator = Validator::make($request->all() , [
             'email' => 'required|email',
             'password' => 'required',
-            'device_type' => 'required|integer'
         ]);
         if($validator->fails())
         {
@@ -101,10 +101,38 @@ class RestAuthController extends Controller
         if (! $token = auth('api_rest')->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $restaurant = Restaurant::where('email' , $request->email)->first();
-        $this->store_palyer($restaurant , $request->device_type);
         return $this->respondWithToken($token);
     }
+
+
+    public function register_token(Request $request)
+    {
+        $validator = Validator::make($request->all() , [
+            'type' => 'required|in:android,ios',
+            'token' => 'required|string'
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+        Token::where('token' , $request->token)->delete();
+        auth('api_rest')->user()->tokens()->create($request->all());
+        return apiRes(200 , 'success token registered');
+    }
+
+    public function remove_token(Request $request)
+    {
+        $validator = Validator::make($request->all() , [
+            'token' => 'required'
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+        auth('api_rest')->user()->tokens()->where('token' , $request->token)->delete();
+        return apiRes(200 , 'success token removed');
+    }
+
 
 
     private function create_player( $device_type)
@@ -153,7 +181,6 @@ class RestAuthController extends Controller
      */
     public function logout()
     {
-        $this->remove_player();
         auth('api_rest')->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }

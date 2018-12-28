@@ -14,12 +14,14 @@ use App\Offer;
 use App\Http\Resources\Orderitem;
 use App\Order;
 use App\Appfee;
+use App\Client;
+use App\Notification;
 
 class RestController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api_rest'])->except([]);
+        $this->middleware(['auth:api_rest' , 'check_restaurant_active'])->except([]);
     }
 
 
@@ -171,8 +173,9 @@ class RestController extends Controller
             return apiRes(400 , 'validation error , invalid  order id');
         }
         $order = Order::findOrFail($request->input('orderid'));
-        $orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
-        if(!in_array($request->input('orderid'), $orders))
+        //$orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
+        //if(!in_array($request->input('orderid'), $orders))
+        if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
             return apiRes(400 , 'error , not your order to accept');
         }
@@ -182,6 +185,13 @@ class RestController extends Controller
         }
         $order->restaurant_decision = 'accepted';
         $order->save();
+        $client = Client::find($order['client_id']);
+        $note = $client->notifications()->create([
+            'title' => 'Your order has been accpted from the restaurant',
+            'content' => 'Your order with id '.$order->id.' has been accepted and will be dleivered to your address soon',
+            'order_id' => $order->id,
+        ]);
+        notifyByFirebase($note->title , $note->content , $client->tokens()->pluck('token')->toArray() , ['order_id' => $order->id]);
         return apiRes(200 , 'order accepted');
     }
 
@@ -195,8 +205,9 @@ class RestController extends Controller
             return apiRes(400 , 'validation error , invalid  order id');
         }
         $order = Order::findOrFail($request->input('orderid'));
-        $orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
-        if(!in_array($request->input('orderid'), $orders))
+        //$orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
+        //if(!in_array($request->input('orderid'), $orders))
+        if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
             return apiRes(400 , 'error , not your order to accept');
         }
@@ -207,6 +218,14 @@ class RestController extends Controller
         $order->restaurant_decision = 'rejected';
         $order->order_status = 'rejected';
         $order->save();
+        $client = Client::find($order['client_id']);
+        $note = $client->notifications()->create([
+            'title' => 'Your order has been rejected from the restaurant',
+            'content' => 'Your order with id '.$order->id.' has been rejected from the restaurant',
+            'order_id' => $order->id,
+        ]);
+        notifyByFirebase($note->title , $note->content , $client->tokens()->pluck('token')->toArray() , ['order_id' => $order->id]);
+
         return apiRes(200 , 'you rejected order and now its finished order');
     }
 
@@ -220,12 +239,13 @@ class RestController extends Controller
             return apiRes(400 , 'validation error , invalid  order id');
         }
         $order = Order::findOrFail($request->input('orderid'));
-        $orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
-        if(!in_array($request->input('orderid'), $orders))
+        //$orders = auth('api_rest')->user()->orders()->pluck('id')->toArray();
+        //if(!in_array($request->input('orderid'), $orders))
+        if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
             return apiRes(400 , 'error , not your order to change status');
         }
-        if($order['order_status'] == 'delivered')
+        if($order['order_status'] == 'delivered' || $order['order_status'] == 'rejected')
         {
             return apiRes(400 , 'error , can not change status of order, its already finished');
         }
@@ -235,6 +255,14 @@ class RestController extends Controller
         }
         $order->order_status = 'delivered';
         $order->save();
+        $client = Client::find($order['client_id']);
+        $note = $client->notifications()->create([
+            'title' => 'Your order has been confirmed being delivered from the restaurant',
+            'content' => 'Your order with id '.$order->id.' has been confirmed dleivered to your address',
+            'order_id' => $order->id,
+        ]);
+        notifyByFirebase($note->title , $note->content , $client->tokens()->pluck('token')->toArray() , ['order_id' => $order->id]);
+
         return apiRes(200 , 'success , order status has been changed to delivered and added commission on the order price');
     }
 
@@ -246,7 +274,6 @@ class RestController extends Controller
             return apiRes(400 , 'can not show order data because it is not yours');
         }
         $orderitems = Order::where('id' , $orderid)->with('products')->first();
-        //return apiRes(200 , 'order items' , $orderitems);
         return (new Orderitem($orderitems))->additional(['status' => 200 , 'msg' => 'order items']);
     }
 
@@ -357,4 +384,13 @@ class RestController extends Controller
         }
         return apiRes(200 , 'sales and fees info' , ['total_commission' => $total_commission , 'total_sales' => $total_sales , 'paid_fees' => $paid_fees]);
     }
+
+
+    public function my_notifications()
+    {
+        $notes = auth('api_rest')->user()->notifications()->paginate(10);
+        return apiRes(200 , 'your notifications' , $notes);
+    }
+
+
 }
