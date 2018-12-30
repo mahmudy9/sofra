@@ -16,6 +16,8 @@ use App\Offer;
 use App\Http\Resources\Order as OrderResource;
 use App\Http\Resources\Offer as OfferResource;
 use App\Complaint;
+use App\Suggestion;
+use App\Contact;
 use App\Review;
 use App\Http\Resources\ReviewResource;
 use OneSignal;
@@ -68,6 +70,8 @@ class ClientController extends Controller
             'items' => 'required|array',
             'items.*.item_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer',
+            'items.*.price' => 'required',
+            'items.*.special_order' => 'nullable|string',
             'restaurant' => 'required|integer',
             'notes' => 'nullable|string|max:190',
             'offer' => 'nullable|integer'
@@ -86,9 +90,9 @@ class ClientController extends Controller
         $order->notes = $request->input('notes');
         if($request->has('offer'))
         {
-            $order->offer_id = $request->input('offer');
             $offer = Offer::findOrFail($request->input('offer'));
-            $discount = $offer->discount;
+            $order->offer_id = $request->input('offer');
+            $discount = $offer['discount_percent'];
             $order->discount = $discount;
         }
 
@@ -157,7 +161,7 @@ class ClientController extends Controller
         ]);
         $tokens = $rest->tokens()->pluck('token')->toArray();
         $fire = notifyByFirebase($notification->title , $notification->content , $tokens , ['order_id' => $notification->order_id]);
-        return apiRes(200 , 'order created and restaurant notification details is '.$fire);
+        return apiRes(200 , 'order created and restaurant notification sent');
     }
 
     
@@ -390,7 +394,7 @@ class ClientController extends Controller
 
     public function my_notifications()
     {
-        $notes = auth('api_client')->user()->notifications()->paginate(10);
+        $notes = auth('api_client')->user()->notifications()->latest()->paginate(10);
         return apiRes(200 , 'your notifications' , $notes);
     }
 

@@ -56,31 +56,32 @@ class RestController extends Controller
     public function edit_product($productid)
     {
         $product = Product::findOrFail($productid);
-        $restproducts = auth('api_rest')->user()->products()->pluck('id')->toArray();
-        if(!in_array($productid , $restproducts))
+
+        if($product['restaurant_id'] != auth('api_rest')->user()->id )
         {
             return apiRes(400 , 'you can not edit another restaurant product');
         }
-        return (new ProductResource($product))->additional(['msg' => 'product details' , 'status' => 200]);
+
+        return apiRes(200 , 'product data' , $product);
     }
 
     public function update_product(Request $request)
     {
         $validator = Validator::make($request->all() , [
             'productid' => 'required|integer|min:1',
-            'name' => 'nullable|string|max:190',
-            'description' => 'nullable|string|max:190',
-            'cooking_duration' => 'nullable|string|max:50',
+            'name' => 'required|string|max:190',
+            'description' => 'required|string|max:190',
+            'cooking_duration' => 'required|string|max:50',
             'pic' => 'nullable|image|max:1900',
-            'price' => 'nullable|numeric|between:0,99999999.99',
+            'price' => 'required|numeric|between:0,99999999.99',
         ]);
         if($validator->fails())
         {
             return apiRes(400 , 'validation error' , $validator->errors());
         }
         $product = Product::findOrFail($request->input('productid'));
-        $restproducts = auth('api_rest')->user()->products()->pluck('id')->toArray();
-        if(!in_array($request->input('productid') , $restproducts))
+
+        if($product['restaurant_id'] != auth('api_rest')->user()->id)
         {
             return apiRes(400 , 'you can not edit another restaurant product');
         }
@@ -110,8 +111,7 @@ class RestController extends Controller
             return apiRes(400 , 'valdiation error , invalida product id' , $validator->errors());
         }
         $product = Product::findOrFail($request->input('productid'));
-        $restproducts = auth('api_rest')->user()->products()->pluck('id')->toArray();
-        if(!in_array($request->input('productid') , $restproducts))
+        if($product['restaurant_id'] != auth('api_rest')->user()->id )
         {
             return apiRes(400 , 'you can not edit another restaurant product');
         }
@@ -153,13 +153,13 @@ class RestController extends Controller
 
     public function current_orders()
     {
-        $orders = auth('api_rest')->user()->orders()->where('restaurant_decision' , 'accepted')->where('client_decision' , '!=','rejected')->paginate(10);
+        $orders = auth('api_rest')->user()->orders()->where('restaurant_decision' , 'accepted')->where('order_status','pending')->paginate(10);
         return OrderResource::collection($orders)->additional(['status' => 200 , 'msg' => 'current orders data']);
     }
 
     public function old_orders()
     {
-        $orders = auth('api_rest')->user()->orders()->where('order_status' , '!=' , 'pending')->paginate(10);
+        $orders = auth('api_rest')->user()->orders()->where('order_status' , '<>' , 'pending')->paginate(10);
         return OrderResource::collection($orders)->additional(['status' => 200 , 'msg' => 'old orders data']);
     }
 
@@ -368,27 +368,18 @@ class RestController extends Controller
 
     public function restaurant_commissions()
     {
-        $orders = auth('api_rest')->user()->orders()->where('order_status' , 'delivered')->get();
-        $total_commission = 0;
-        $total_sales = 0;
-        foreach($orders as $order)
-        {
-            $total_commission = $order['commission'] + $total_commission;
-            $total_sales = $total_sales + $order['price'];
-        }
-        $appfees = auth('api_rest')->user()->appfees()->get();
-        $paid_fees = 0;
-        foreach($appfees as $fee)
-        {
-            $paid_fees = $paid_fees + $fee['amount_paid'];
-        }
-        return apiRes(200 , 'sales and fees info' , ['total_commission' => $total_commission , 'total_sales' => $total_sales , 'paid_fees' => $paid_fees]);
+        $commissions = auth('api_rest')->user()->orders()->where('order_status' , 'delivered')->sum('commission');
+        $prices = auth('api_rest')->user()->orders()->where('order_status' , 'delivered')->sum('price');
+        $commissions = round($commissions , 2);
+        $prices = round($prices , 2);
+        $paid_fees = auth('api_rest')->user()->appfees()->sum('amount_paid');
+        return apiRes(200 , 'sales and fees info' , ['total_commission' => $commissions , 'total_sales' => $prices , 'paid_fees' => $paid_fees]);
     }
 
 
     public function my_notifications()
     {
-        $notes = auth('api_rest')->user()->notifications()->paginate(10);
+        $notes = auth('api_rest')->user()->notifications()->latest()->paginate(10);
         return apiRes(200 , 'your notifications' , $notes);
     }
 

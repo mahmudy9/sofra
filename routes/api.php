@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 //     return $request->user();
 // });
 
+
+// client routes
 Route::post('/client/register' , 'ClientAuthController@register');
 Route::post('/client/login', 'ClientAuthController@login');
 Route::post('/client/logout', 'ClientAuthController@logout');
@@ -42,6 +44,7 @@ Route::post('/client/complaint/create' , 'ClientController@create_complaint');
 Route::post('/client/suggestion/create' , 'ClientController@create_suggestion');
 Route::post('/client/contact/create' , 'ClientController@create_contact');
 Route::post('/client/review/create' , 'ClientController@create_review');
+Route::put('/client/review/update' , 'ClientController@update_review');
 Route::delete('/client/review/destroy/{reviewid}' , 'ClientController@destroy_review');
 Route::post('/client/token/register' , 'ClientAuthController@register_token');
 Route::post('/client/token/remove' , 'ClientAuthController@remove_token');
@@ -50,6 +53,8 @@ Route::get('/client/notifications' , 'ClientController@my_notifications');
 Route::post('/client/restaurant/search' , 'ClientController@search_restaurants');
 Route::post('/client/restaurant/products/search' , 'ClientController@search_restaurant_products');
 
+
+// resturant routes
 Route::post('/rest/register' , 'RestAuthController@register');
 Route::post('/rest/login', 'RestAuthController@login');
 Route::post('/rest/logout', 'RestAuthController@logout');
@@ -59,7 +64,7 @@ Route::post('/rest/password/email' , 'RestForgotPasswordController@sendResetLink
 Route::post('/rest/product/create' , 'RestController@create_product');
 Route::get('/rest/product/edit/{productid}' , 'RestController@edit_product');
 Route::put('/rest/product/update' , 'RestController@update_product');
-Route::post('/rest/product/destroy' , 'RestController@destroy_product');
+Route::delete('/rest/product/destroy' , 'RestController@destroy_product');
 Route::get('/rest/product' , 'RestController@restaurant_products');
 Route::post('/rest/status' , 'RestController@change_status');
 Route::get('/rest/order/new' , 'RestController@new_orders');
