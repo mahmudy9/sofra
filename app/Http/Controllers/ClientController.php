@@ -201,9 +201,17 @@ class ClientController extends Controller
         return OrderResource::collection($orders)->additional(['msg' => 'orders delivered' , 'status' => 200]);
     }
 
-    public function accept_order($orderid)
+    public function accept_order(Request $request)
     {
-        $order = Order::findOrFail($orderid);
+        $validator = Validator::make($request->all() , [
+            'orderid' => 'required|integer|min:1'
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+
+        $order = Order::findOrFail($request->orderid);
         if($order['order_status'] == 'rejected' || $order['order_status'] == 'delivered')
         {
             return apiRes(400 , 'can not accept finished order');
@@ -218,23 +226,26 @@ class ClientController extends Controller
         $rest = Restaurant::find($order['restaurant_id']);
         $not = $rest->notifications()->create([
             'title' => 'order accepted by client',
-            'content' => 'order with id '.$orderid.' has been accepted from client '.auth('api_client')->user()->name,
-            'order_id' => $orderid,
+            'content' => 'order with id '.$request->orderid.' has been accepted from client '.auth('api_client')->user()->name,
+            'order_id' => $request->orderid,
         ]);
-        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $orderid]);
+        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $request->orderid]);
         return apiRes(200 , 'order accepted by you');
     }
 
-    public function reject_order($orderid)
+    public function reject_order(Request $request)
     {
-        $order = Order::findOrFail($orderid);
+        $validator = Validator::make($request->all() , [
+            'orderid' => 'required|integer|min:1'
+        ]);
+        if($validator->fails())
+        {
+            return apiRes(400 , 'validation error' , $validator->errors());
+        }
+        $order = Order::findOrFail($request->orderid);
         if($order['order_status'] == 'rejected' || $order['order_status'] == 'delivered')
         {
             return apiRes(400 , 'can not reject finished order');
-        }
-        if($order['restaurant_decision'] == 'pending')
-        {
-            return apiRes(400 , 'can not reject order pending restaurant decision');
         }
 
         $order->client_decision = 'rejected';
@@ -243,12 +254,12 @@ class ClientController extends Controller
         $rest = Restaurant::find($order['restaurant_id']);
         $not = $rest->notifications()->create([
             'title' => 'order rejected by client',
-            'content' => 'order with id '.$orderid.' has been rejected from client '.auth('api_client')->user()->name,
-            'order_id' => $orderid,
+            'content' => 'order with id '.$request->orderid.' has been rejected from client '.auth('api_client')->user()->name,
+            'order_id' => $request->orderid,
         ]);
-        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $orderid]);
+        notifyByFirebase($not->title , $not->content , $rest->tokens()->pluck('token')->toArray() , ['order_id' => $request->orderid]);
 
-        return apiRes(200 , 'order has been rejected');
+        return apiRes(200 , 'order has been rejected by you');
     }
 
     public function offers()
@@ -337,7 +348,7 @@ class ClientController extends Controller
         $restaurant = Restaurant::findOrFail($request->input('restaurant'));
         if(!$restaurant->orders()->where('client_id' , auth('api_client')->user()->id)->exists())
         {
-            return apiRes(400 , 'error , you can not review a resturant you did not order from');
+            return apiRes(401 , 'error , you can not review a resturant you did not order from');
         }
         $review = new Review;
         $review->restaurant_id = $request->input('restaurant');
@@ -361,7 +372,7 @@ class ClientController extends Controller
         $review = Review::findOrFail($request->input('review_id'));
         if($review['client_id'] != auth('api_client')->user()->id)
         {
-            return apiRes(400 , 'error, this is not your review');
+            return apiRes(401 , 'error, this is not your review');
         }
         $review->review = $request->input('review');
         $review->rating = $request->input('rating');
@@ -374,7 +385,7 @@ class ClientController extends Controller
         $review = Review::findOrFail($reviewid);
         if($review['client_id'] != auth('api_client')->user()->id)
         {
-            return apiRes(400 , 'error , it is not your review to delete');
+            return apiRes(401 , 'error , it is not your review to delete');
         }
         $review->delete();
         return apiRes(200 , 'success , your review has been deleted');
@@ -385,10 +396,9 @@ class ClientController extends Controller
         $order = Order::findOrFail($orderid);
         if($order['client_id'] != auth('api_client')->user()->id)
         {
-            return apiRes(400 , 'can not show order data because it is not yours');
+            return apiRes(401 , 'not authorized to show this order');
         }
         $orderitems = Order::where('id' , $orderid)->with('products')->first();
-        //return apiRes(200 , 'order items' , $orderitems);
         return (new Orderitem($orderitems))->additional(['status' => 200 , 'msg' => 'order items']);
     }
 

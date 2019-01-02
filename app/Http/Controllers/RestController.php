@@ -59,7 +59,7 @@ class RestController extends Controller
 
         if($product['restaurant_id'] != auth('api_rest')->user()->id )
         {
-            return apiRes(400 , 'you can not edit another restaurant product');
+            return apiRes(401 , 'you can not edit another restaurant product');
         }
 
         return apiRes(200 , 'product data' , $product);
@@ -83,7 +83,7 @@ class RestController extends Controller
 
         if($product['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'you can not edit another restaurant product');
+            return apiRes(401 , 'you can not edit another restaurant product');
         }
 
         if($request->hasFile('pic'))
@@ -113,11 +113,11 @@ class RestController extends Controller
         $product = Product::findOrFail($request->input('productid'));
         if($product['restaurant_id'] != auth('api_rest')->user()->id )
         {
-            return apiRes(400 , 'you can not edit another restaurant product');
+            return apiRes(401 , 'you can not delete another restaurant product');
         }
         if($product->orders()->exists())
         {
-            return apiRes(400 , 'you can not delete product , it has orders');
+            return apiRes(403 , 'you can not delete product , it has orders');
         }
         $product->delete();
         return apiRes(200 , 'product deleted successfully');
@@ -177,11 +177,11 @@ class RestController extends Controller
         //if(!in_array($request->input('orderid'), $orders))
         if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'error , not your order to accept');
+            return apiRes(401 , 'error , not your order to accept');
         }
         if($order['order_status'] == 'rejected' || $order['order_status'] == 'delivered')
         {
-            return apiRes(400 , 'error , can not accept order, its already finished');
+            return apiRes(403 , 'error , can not accept order, its already finished');
         }
         $order->restaurant_decision = 'accepted';
         $order->save();
@@ -209,11 +209,11 @@ class RestController extends Controller
         //if(!in_array($request->input('orderid'), $orders))
         if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'error , not your order to accept');
+            return apiRes(401 , 'error , not your order to accept');
         }
         if($order['order_status'] == 'rejected' || $order['order_status'] == 'delivered')
         {
-            return apiRes(400 , 'error , can not reject order, its already finished');
+            return apiRes(403 , 'error , can not reject order, its already finished');
         }
         $order->restaurant_decision = 'rejected';
         $order->order_status = 'rejected';
@@ -243,15 +243,15 @@ class RestController extends Controller
         //if(!in_array($request->input('orderid'), $orders))
         if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'error , not your order to change status');
+            return apiRes(401 , 'error , not your order to change status');
         }
         if($order['order_status'] == 'delivered' || $order['order_status'] == 'rejected')
         {
-            return apiRes(400 , 'error , can not change status of order, its already finished');
+            return apiRes(403 , 'error , can not change status of order, its already finished');
         }
         if($order['restaurant_decision'] == 'pending')
         {
-            return apiRes(400, 'you can not change status to delivered , you have to accept order first');
+            return apiRes(409, 'you can not change status to delivered , you have to accept order first');
         }
         $order->order_status = 'delivered';
         $order->save();
@@ -271,7 +271,7 @@ class RestController extends Controller
         $order = Order::findOrFail($orderid);
         if($order['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'can not show order data because it is not yours');
+            return apiRes(401 , 'can not show order data because it is not yours');
         }
         $orderitems = Order::where('id' , $orderid)->with('products')->first();
         return (new Orderitem($orderitems))->additional(['status' => 200 , 'msg' => 'order items']);
@@ -348,7 +348,7 @@ class RestController extends Controller
         $offer = Offer::findOrFail($request->input('offerid'));
         if($offer['restaurant_id'] != auth('api_rest')->user()->id)
         {
-            return apiRes(400 , 'you can not edit another restaurant offer');
+            return apiRes(401 , 'you can not edit another restaurant offer');
         }
         if($request->hasFile('pic'))
         {
@@ -364,6 +364,21 @@ class RestController extends Controller
         $offer->to_date = $request->input('to_date');
         $offer->save();
         return (new OfferResource($offer))->additional(['status' => 200 , 'msg' => 'offer updated data']);
+    }
+
+    public function delete_offer($offerid)
+    {
+        $offer = Offer::findOrFail($offerid);
+        if($offer['restaurant_id'] != auth('api_rest')->user()->id)
+        {
+            return apiRes(401 , 'unauthorized to delete offer');
+        }
+        if($offer->orders()->exists())
+        {
+            return apiRes(403 , 'cant delete offer it has orders');
+        }
+        $offer->delete();
+        return apiRes(200 , 'success, offer has been deleted');
     }
 
     public function restaurant_commissions()
