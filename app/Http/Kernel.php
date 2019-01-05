@@ -61,7 +61,9 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'check_restaurant_active' => \App\Http\Middleware\CheckRestaurantActive::class,
+        'restaurant_reached_max_commission' => \App\Http\Middleware\CheckRestaurantActive::class,
+        'is_client_blocked' => \App\Http\Middleware\IsClientBlocked::class,
+        'is_restaurant_blocked' => \App\Http\Middleware\IsRestaurantBlocked::class,
     ];
 
     /**

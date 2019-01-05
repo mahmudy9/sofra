@@ -29,7 +29,7 @@ class ClientController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api_client'])
+        $this->middleware(['auth:api_client' , 'is_client_blocked'])
         ->except(['restaurants' , 'restaurant_products' , 'restaurant_reviews' , 'restaurant_details' , 'product' , 'search_restaurant_products' , 'search_restaurants']);
     }
 

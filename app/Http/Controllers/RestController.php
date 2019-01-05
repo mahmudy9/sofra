@@ -21,7 +21,7 @@ class RestController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api_rest' , 'check_restaurant_active'])->except([]);
+        $this->middleware(['auth:api_rest','is_restaurant_blocked'])->except([]);
     }
 
 

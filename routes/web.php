@@ -19,8 +19,10 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
+
 Route::get('/client/password/reset/{token}' , 'ClientResetPasswordController@showResetForm');
 Route::post('/client/password/reset' , 'ClientResetPasswordController@reset');
+
 
 Route::get('/rest/password/reset/{token}' , 'RestResetPasswordController@showResetForm');
 Route::post('/rest/password/reset' , 'RestResetPasswordController@reset');

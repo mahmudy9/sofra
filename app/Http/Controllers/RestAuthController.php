@@ -20,7 +20,7 @@ class RestAuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api_rest')->except(['login' , 'register']);
+        $this->middleware(['auth:api_rest' , 'is_restaurant_blocked'])->except(['login' , 'register']);
     }
 
 

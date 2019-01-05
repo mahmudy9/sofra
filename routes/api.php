@@ -54,7 +54,7 @@ Route::post('/client/restaurant/search' , 'ClientController@search_restaurants')
 Route::post('/client/restaurant/products/search' , 'ClientController@search_restaurant_products');
 
 
-// resturant routes
+// restaurant routes
 Route::post('/rest/register' , 'RestAuthController@register');
 Route::post('/rest/login', 'RestAuthController@login');
 Route::post('/rest/logout', 'RestAuthController@logout');
@@ -70,14 +70,18 @@ Route::post('/rest/status' , 'RestController@change_status');
 Route::get('/rest/order/new' , 'RestController@new_orders');
 Route::get('rest/order/current' , 'RestController@current_orders');
 Route::get('/rest/order/old' , 'RestController@old_orders');
-Route::get('/rest/order/items/{orderid}' , 'RestController@order_items');
-Route::post('/rest/order/accept' , 'RestController@accept_order');
-Route::post('/rest/order/reject' , 'RestController@reject_order');
-Route::post('/rest/order/confirm-delivered' , 'RestController@confirm_delivered');
-Route::get('/rest/offer' , 'RestController@restaurant_offers');
-Route::post('/rest/offer/create' , 'RestController@create_offer');
-Route::post('/rest/offer/update' , 'RestController@update_offer');
-Route::delete('/rest/offer/destroy/{offerid}' , 'RestController@delete_offer');
+
+Route::group(['middleware' => [ 'restaurant_reached_max_commission' ]] , function() {
+    Route::get('/rest/order/items/{orderid}' , 'RestController@order_items');
+    Route::post('/rest/order/accept' , 'RestController@accept_order');
+    Route::post('/rest/order/reject' , 'RestController@reject_order');
+    Route::post('/rest/order/confirm-delivered' , 'RestController@confirm_delivered');
+    Route::get('/rest/offer' , 'RestController@restaurant_offers');
+    Route::post('/rest/offer/create' , 'RestController@create_offer');
+    Route::post('/rest/offer/update' , 'RestController@update_offer');
+    Route::delete('/rest/offer/destroy/{offerid}' , 'RestController@delete_offer');
+});
+
 Route::get('/rest/commissions' , 'RestController@restaurant_commissions');
 Route::post('/rest/token/register' , 'RestAuthController@register_token');
 Route::post('/rest/token/remove' , 'RestAuthController@remove_token');

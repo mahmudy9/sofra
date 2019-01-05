@@ -20,7 +20,7 @@ class ClientAuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api_client')->except(['login' , 'register']);
+        $this->middleware(['auth:api_client' , 'is_client_blocked'])->except(['login' , 'register']);
     }
 
 

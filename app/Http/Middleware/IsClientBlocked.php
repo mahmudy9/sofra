@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 
-class CheckRestaurantActive
+class IsClientBlocked
 {
     /**
      * Handle an incoming request.
@@ -15,9 +15,9 @@ class CheckRestaurantActive
      */
     public function handle($request, Closure $next)
     {
-        if($request->user()->is_activated == false)
+        if($request->user()->activated != 1)
         {
-            return apiRes(400 , 'Exceeded max app fees amount allowed ,Cant perform actions till pay the App Fees');
+            return apiRes(401 , 'unauthorized to do this action');
         }
         return $next($request);
     }
